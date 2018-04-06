@@ -13,7 +13,7 @@ fn main() {
     }
     impl State {
         fn has_all_required_chars(&self) -> bool {
-            self.digit == 0 && self.lower == 0 && self.upper == 0 && self.special == 0
+            self.required_chars() == 0
         }
 
         fn required_chars(&self) -> u8 {
