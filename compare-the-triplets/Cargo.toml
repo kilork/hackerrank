@@ -1,0 +1,6 @@
+[package]
+name = "compare-the-triplets"
+version = "0.1.0"
+authors = ["Alexander Korolev <kilork@yandex.ru>"]
+
+[dependencies]
