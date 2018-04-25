@@ -11,10 +11,10 @@ fn main() {
 }
 
 fn seek_perfect_numbers(nums: &[u64]) -> Option<u64> {
-    let mut length = 1;
     if let Some(&0) = nums.get(0) {
         return None;
     }
+    let mut length = 1;
     while length <= nums.len() / 2 {
         let mut result = Vec::new();
 
@@ -41,10 +41,10 @@ fn seek_perfect_numbers(nums: &[u64]) -> Option<u64> {
                     break 'outer;
                 }
             }
-            pos = upper_bound;
-            if pos == nums.len() {
+            if upper_bound == nums.len() {
                 return Some(perfect_number);
             }
+            pos = upper_bound;
         }
         length += 1;
     }
