@@ -7,17 +7,22 @@ fn main() {
 }
 
 fn process_two_strings() -> &'static str {
-    let mut line1 : Vec<u8> = read_line().bytes().collect();
+    let mut line1: Vec<u8> = read_line().bytes().collect();
     line1.sort_unstable();
     line1.dedup();
-    let mut line2 : Vec<u8> = read_line().bytes().collect();
+    let mut line2: Vec<u8> = read_line().bytes().collect();
     line2.sort_unstable();
-    for b in line1 {
-        if let Ok(_) = line2.binary_search(&b) {
-            return "YES"
+    if let Some(_) = line1.iter().find(|&x| {
+        if let Ok(_) = line2.binary_search(x) {
+            true
+        } else {
+            false
         }
+    }) {
+        "YES"
+    } else {
+        "NO"
     }
-    "NO"
 }
 
 fn read_line() -> String {
