@@ -8,8 +8,6 @@ fn main() {
 }
 
 struct CommonChildFinder<'a> {
-    run_count: usize,
-    hit_count: usize,
     s1: &'a [u8],
     s2: &'a [u8],
     s1_len: usize,
@@ -20,8 +18,6 @@ struct CommonChildFinder<'a> {
 impl<'a> CommonChildFinder<'a> {
     pub fn new(s1: &'a str, s2: &'a str) -> CommonChildFinder<'a> {
         CommonChildFinder {
-            run_count: 0,
-            hit_count: 0,
             s1: s1.as_bytes(),
             s2: s2.as_bytes(),
             s1_len: s1.len(),
@@ -40,23 +36,16 @@ impl<'a> CommonChildFinder<'a> {
         }
 
         if let Some(solution) = self.find_solution(s1_from, s2_from) {
-            self.hit_count += 1;
             return solution;
         }
 
-        self.run_count += 1;
-
         let c = self.s1[s1_from];
-        let tail_solution = self.solve_bytes(s1_from + 1, s2_from);
-        let solution = if let Some(index) = self.s2.iter().skip(s2_from).position(|&x| x == c) {
-            if self.s2_len - s2_from - index < tail_solution {
-                0
-            } else {
-                1 + self.solve_bytes(s1_from + 1, s2_from + index + 1)
+        let mut solution = self.solve_bytes(s1_from + 1, s2_from);
+        if let Some(index) = self.s2.iter().skip(s2_from).position(|&x| c == x) {
+            if self.s2_len - s2_from - index >= solution {
+                solution = (1 + self.solve_bytes(s1_from + 1, s2_from + index + 1)).max(solution)
             }
-        } else {
-            0
-        }.max(tail_solution);
+        }
         self.write_solution(s1_from, s2_from, solution);
         solution
     }
