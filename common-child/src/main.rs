@@ -4,16 +4,12 @@
 fn main() {
     let s1 = read_line();
     let s2 = read_line();
-    let mut finder = CommonChildFinder::new(&s1, &s2);
-    let solution = finder.solve();
-    println!("{}", solution);
-    println!("run: {} hit: {}", finder.run_count, finder.hit_count);
+    println!("{}", common_child_length(&s1, &s2));
 }
 
 struct CommonChildFinder<'a> {
     run_count: usize,
     hit_count: usize,
-    max_solution: usize,
     s1: &'a [u8],
     s2: &'a [u8],
     solutions: Vec<Option<usize>>,
@@ -24,7 +20,6 @@ impl<'a> CommonChildFinder<'a> {
         CommonChildFinder {
             run_count: 0,
             hit_count: 0,
-            max_solution: 0,
             s1: s1.as_bytes(),
             s2: s2.as_bytes(),
             solutions: vec![None; s1.len() * s2.len()],
@@ -48,25 +43,15 @@ impl<'a> CommonChildFinder<'a> {
         }
         self.run_count += 1;
 
-        let mut s1_index = s1_from;
-        let mut max_solution = 0;
-        while s1_index < s1_len {
-            let c = self.s1[s1_index];
-            let solution = if let Some(index) = self.s2.iter().skip(s2_from).position(|&x| x == c) {
-                1 + self.solve_bytes(s1_index + 1, s2_from + index + 1)
-            } else {
-                self.solve_bytes(s1_index + 1, s2_from)
-            };
-            if solution > max_solution {
-                max_solution = solution;
-                if max_solution > self.max_solution {
-                    self.max_solution = max_solution;
-                }
-            }
-            s1_index += 1;
-        }
-        self.write_solution(s1_from, s2_from, max_solution);
-        max_solution
+        let c = self.s1[s1_from];
+        let tail_solution = self.solve_bytes(s1_from + 1, s2_from);
+        let solution = if let Some(index) = self.s2.iter().skip(s2_from).position(|&x| x == c) {
+            1 + self.solve_bytes(s1_from + 1, s2_from + index + 1)
+        } else {
+            0
+        }.max(tail_solution);
+        self.write_solution(s1_from, s2_from, solution);
+        solution
     }
 
     fn write_solution(&mut self, s1_from: usize, s2_from: usize, solution: usize) {
