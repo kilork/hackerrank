@@ -12,6 +12,8 @@ struct CommonChildFinder<'a> {
     hit_count: usize,
     s1: &'a [u8],
     s2: &'a [u8],
+    s1_len: usize,
+    s2_len: usize,
     solutions: Vec<Option<usize>>,
 }
 
@@ -22,6 +24,8 @@ impl<'a> CommonChildFinder<'a> {
             hit_count: 0,
             s1: s1.as_bytes(),
             s2: s2.as_bytes(),
+            s1_len: s1.len(),
+            s2_len: s2.len(),
             solutions: vec![None; s1.len() * s2.len()],
         }
     }
@@ -31,16 +35,15 @@ impl<'a> CommonChildFinder<'a> {
     }
 
     fn solve_bytes(&mut self, s1_from: usize, s2_from: usize) -> usize {
-        let s1_len = self.s1.len();
-        let s2_len = self.s2.len();
-
-        if s1_from == s1_len || s2_from == s2_len {
+        if s1_from == self.s1_len || s2_from == self.s2_len {
             return 0;
         }
+
         if let Some(solution) = self.find_solution(s1_from, s2_from) {
             self.hit_count += 1;
             return solution;
         }
+
         self.run_count += 1;
 
         let c = self.s1[s1_from];
@@ -55,11 +58,11 @@ impl<'a> CommonChildFinder<'a> {
     }
 
     fn write_solution(&mut self, s1_from: usize, s2_from: usize, solution: usize) {
-        self.solutions[s1_from * self.s1.len() + s2_from] = Some(solution);
+        self.solutions[s1_from * self.s1_len + s2_from] = Some(solution);
     }
 
     fn find_solution(&self, s1_from: usize, s2_from: usize) -> Option<usize> {
-        self.solutions[s1_from * self.s1.len() + s2_from]
+        self.solutions[s1_from * self.s1_len + s2_from]
     }
 }
 
