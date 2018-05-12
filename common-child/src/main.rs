@@ -49,7 +49,11 @@ impl<'a> CommonChildFinder<'a> {
         let c = self.s1[s1_from];
         let tail_solution = self.solve_bytes(s1_from + 1, s2_from);
         let solution = if let Some(index) = self.s2.iter().skip(s2_from).position(|&x| x == c) {
-            1 + self.solve_bytes(s1_from + 1, s2_from + index + 1)
+            if self.s2_len - s2_from - index < tail_solution {
+                0
+            } else {
+                1 + self.solve_bytes(s1_from + 1, s2_from + index + 1)
+            }
         } else {
             0
         }.max(tail_solution);
@@ -57,12 +61,14 @@ impl<'a> CommonChildFinder<'a> {
         solution
     }
 
+    #[inline]
     fn write_solution(&mut self, s1_from: usize, s2_from: usize, solution: usize) {
-        self.solutions[s1_from * self.s1_len + s2_from] = Some(solution);
+        self.solutions[s2_from * self.s2_len + s1_from] = Some(solution);
     }
 
+    #[inline]
     fn find_solution(&self, s1_from: usize, s2_from: usize) -> Option<usize> {
-        self.solutions[s1_from * self.s1_len + s2_from]
+        self.solutions[s2_from * self.s2_len + s1_from]
     }
 }
 
