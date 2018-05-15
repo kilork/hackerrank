@@ -1,5 +1,6 @@
 // good to read:
-//https://en.wikipedia.org/wiki/Edit_distance
+// https://en.wikipedia.org/wiki/Dynamic_programming
+// https://en.wikipedia.org/wiki/Edit_distance
 
 fn main() {
     let s1 = read_line();

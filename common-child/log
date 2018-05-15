@@ -1,0 +1,4 @@
+for i in `seq 10`; do cat input03.txt | time -f "%E real" -o results03_time -a target/debug/common-child >> results03; done
+
+for i in `seq 10`; do cat input05.txt | time -f "%E real" -o results05_time -a target/release/common-child >> results05; done
+for i in `seq 10`; do cat input03.txt | time -f "%E real" -o results03_time -a target/release/common-child >> results03; done
