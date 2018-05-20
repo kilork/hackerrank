@@ -31,27 +31,23 @@ impl<'a> GeneFixer<'a> {
     pub fn solve(&mut self) -> usize {
         let theoretical_min = self.counter.count_positive();
 
-        if theoretical_min == 0 {
-            return 0;
+        if theoretical_min == 0 || self.is_solution(theoretical_min) {
+            return theoretical_min;
         }
 
         let (mut left, mut right) = (theoretical_min, self.gene.len());
 
-        if self.is_solution(left) {
-            return left;
-        } else {
-            loop {
-                let mid = (left + right + 1) / 2;
+        loop {
+            let mid = (left + right + 1) / 2;
 
-                if self.is_solution(mid) {
-                    right = mid;
+            if self.is_solution(mid) {
+                right = mid;
 
-                    if right == left + 1 {
-                        return right;
-                    }
-                } else {
-                    left = mid;
+                if right == left + 1 {
+                    return right;
                 }
+            } else {
+                left = mid;
             }
         }
     }
