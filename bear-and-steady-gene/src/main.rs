@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use std::ops::SubAssign;
+use std::time::{Duration, Instant};
 
 fn main() {
     let _n: usize = read_line().parse().unwrap();
@@ -11,31 +11,6 @@ fn main() {
 struct GeneFixer<'a> {
     gene: &'a [u8],
     counter: GeneCounter,
-    calls_count: usize,
-    runs_count: usize,
-    cache_hits: usize,
-    cache: HashMap<CacheKey, Option<GeneRange>>,
-}
-
-#[derive(PartialEq, Eq, Hash)]
-struct CacheKey {
-    start: usize,
-    a: i32,
-    c: i32,
-    t: i32,
-    g: i32,
-}
-
-impl<'a> From<(usize, &'a GeneCounter)> for CacheKey {
-    fn from(key: (usize, &'a GeneCounter)) -> CacheKey {
-        CacheKey {
-            start: key.0,
-            a: key.1.a,
-            c: key.1.c,
-            t: key.1.t,
-            g: key.1.g,
-        }
-    }
 }
 
 impl<'a> From<&'a str> for GeneFixer<'a> {
@@ -47,18 +22,11 @@ impl<'a> From<&'a str> for GeneFixer<'a> {
 impl<'a> From<&'a [u8]> for GeneFixer<'a> {
     fn from(gene: &'a [u8]) -> GeneFixer<'a> {
         let counter = GeneCounter::from(gene);
-        GeneFixer {
-            gene,
-            counter,
-            calls_count: 0,
-            runs_count: 0,
-            cache_hits: 0,
-            cache: HashMap::new(),
-        }
+        GeneFixer { gene, counter }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 struct GeneCounter {
     a: i32,
     c: i32,
@@ -68,12 +36,8 @@ struct GeneCounter {
 
 impl<'a> From<&'a [u8]> for GeneCounter {
     fn from(val: &[u8]) -> GeneCounter {
-        let a = val.iter().filter(|&&x| x == b'A').count() as i32;
-        let c = val.iter().filter(|&&x| x == b'C').count() as i32;
-        let t = val.iter().filter(|&&x| x == b'T').count() as i32;
-        let g = val.iter().filter(|&&x| x == b'G').count() as i32;
-
-        let mut gene_counter = GeneCounter { a, c, t, g };
+        let mut gene_counter = GeneCounter::default();
+        gene_counter.add_items(val);
 
         let len = val.len() as i32 / 4;
         gene_counter -= len;
@@ -91,33 +55,59 @@ impl SubAssign<i32> for GeneCounter {
     }
 }
 
-impl PartialEq<i32> for GeneCounter {
-    fn eq(&self, other: &i32) -> bool {
-        let other = *other;
-        self.a == other && self.c == other && self.t == other && self.g == other
-    }
-}
-
 impl GeneCounter {
+    fn add_items(&mut self, data: &[u8]) {
+        data.iter().fold(self, |acc, x| {
+            acc.add_item(*x);
+            acc
+        });
+    }
+
+    fn add_item(&mut self, item: u8) {
+        match item {
+            b'A' => self.a += 1,
+            b'C' => self.c += 1,
+            b'T' => self.t += 1,
+            b'G' => self.g += 1,
+            _ => (),
+        }
+    }
+
+    fn sub_item(&mut self, item: u8) {
+        match item {
+            b'A' => self.a -= 1,
+            b'C' => self.c -= 1,
+            b'T' => self.t -= 1,
+            b'G' => self.g -= 1,
+            _ => (),
+        }
+    }
+
     fn is_done(&self) -> bool {
         self.a <= 0 && self.c <= 0 && self.t <= 0 && self.g <= 0
     }
 
-    fn theoretical_min(&self) -> usize {
-        let mut theoretical_min = 0;
+    fn is_superset(&self, other: &GeneCounter) -> bool {
+        ((self.a >= other.a) || (other.a <= 0)) && ((self.c >= other.c) || (other.c <= 0))
+            && ((self.t >= other.t) || (other.t <= 0))
+            && ((self.g >= other.g) || (other.g <= 0))
+    }
+
+    fn count_positive(&self) -> usize {
+        let mut count = 0;
         if self.a > 0 {
-            theoretical_min += self.a;
+            count += self.a;
         }
         if self.c > 0 {
-            theoretical_min += self.c;
+            count += self.c;
         }
         if self.t > 0 {
-            theoretical_min += self.t;
+            count += self.t;
         }
         if self.g > 0 {
-            theoretical_min += self.g;
+            count += self.g;
         }
-        theoretical_min as usize
+        count as usize
     }
 
     fn try_decrease(&self, value: u8) -> Option<GeneCounter> {
@@ -143,100 +133,59 @@ impl GeneCounter {
     }
 }
 
-#[derive(Debug, Clone)]
-struct GeneRange(usize, usize);
-
 impl<'a> GeneFixer<'a> {
-    pub fn fix(&mut self) -> usize {
-        let counter = self.counter.clone();
-        let result = self.solve(0, &counter).unwrap();
-        if option_env!("DEBUG") == Some("yes") {
-            println!("result: {:?}", result);
-            println!("counter: {:?}", counter);
-            println!("calls: {}, runs: {}, cache hits: {}, cache size: {}", self.calls_count, self.runs_count, self.cache_hits, self.cache.len());
-        }
-        result.1
-    }
-
     pub fn scan(&mut self) -> usize {
+        let full_time = Instant::now();
+        
         let counter = self.counter.clone();
-        let theoretical_min = counter.theoretical_min();
+        let mut cache = vec![GeneCounter::default(); self.gene.len()];
+
+        println!("cache created in: {:?}", full_time.elapsed());
+        let theoretical_min = counter.count_positive();
         if theoretical_min == 0 {
             return 0;
         }
-        let mut min_len = self.gene.len();
-        for start in 0..self.gene.len() - theoretical_min {
-            if start % 1000 == 0 {
-                println!("{}", start);
-            }
-            let mut counter = counter.clone();
-            let mut count = 0;
-            let mut len = 0;
-            let mut seeker = self.gene.iter().skip(start);
-            while let Some(c) = seeker.next() {
-                len += 1;
-                if let Some(new_counter) = counter.try_decrease(*c) {
-                    counter = new_counter;
-                    count += 1;
-                    if count == theoretical_min {
-                        if len < min_len {
-                            min_len = len;
-                            if min_len == theoretical_min {
-                                return min_len;
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-        min_len
-    }
 
-    fn solve(&mut self, start: usize, gene_counter: &GeneCounter) -> Option<GeneRange> {
-        self.calls_count += 1;
-        if gene_counter.is_done() {
-            return Some(GeneRange(start, 0));
-        }
-        if start == self.gene.len() {
-            return None;
-        }
-        let cache_key = CacheKey::from((start, gene_counter));
-        if let Some(solution) = self.cache.get(&cache_key) {
-            self.cache_hits += 1;
-            return solution.clone();
-        }
-        self.runs_count += 1;
-        let solution = {
-            let tail_solution = self.solve(start + 1, gene_counter);
-            if let Some(remaining_counter) = gene_counter.try_decrease(self.gene[start]) {
-                if let Some(GeneRange(remaining_start, remaining_len)) =
-                    self.solve(start + 1, &remaining_counter)
-                {
-                    let remaining_solution = remaining_start - start + remaining_len;
-                    if let Some(GeneRange(tail_start, tail_len)) = tail_solution {
-                        if remaining_solution < tail_len {
-                            Some(GeneRange(start, remaining_solution))
-                        } else {
-                            Some(GeneRange(tail_start, tail_len))
-                        }
-                    } else {
-                        Some(GeneRange(start, remaining_solution))
-                    }
-                } else {
-                    tail_solution
-                }
-            } else {
-                tail_solution
+        let local_time = Instant::now();
+        let first_set = &self.gene[..theoretical_min];
+        {
+            let last_counter = &mut cache[0];
+            last_counter.add_items(first_set);
+            if last_counter.is_superset(&counter) {
+                return theoretical_min;
             }
-        };
-        self.cache.insert(cache_key, solution.clone());
-        solution
+        }
+        let mut len = theoretical_min;
+        for i in 1..self.gene.len() - len + 1 {
+            let c = { cache[i - 1].clone() };
+            let mut current_counter = &mut cache[i];
+            *current_counter = c.clone();
+            current_counter.sub_item(self.gene[i - 1]);
+            current_counter.add_item(self.gene[i + len - 1]);
+            if current_counter.is_superset(&counter) {
+                return len;
+            }
+        }
+        println!("cache of len: {} filled in: {:?}", len, local_time.elapsed());
+        let local_time = Instant::now();
+        while len < self.gene.len() {
+            len += 1;
+            if len % 1000 == 0 {
+                println!("{} running time: {:?}", len, local_time.elapsed());
+            }
+            for i in 0..self.gene.len() - len + 1 {
+                let mut current_counter = &mut cache[i];
+                current_counter.add_item(self.gene[i + len - 1]);
+                if current_counter.is_superset(&counter) {
+                    return len;
+                }
+            }
+        }
+        0
     }
 }
 
 fn bear_and_steady_gene(gene: &str) -> usize {
-    // GeneFixer::from(gene).fix()
     GeneFixer::from(gene).scan()
 }
 
@@ -265,6 +214,9 @@ mod tests {
 
     #[test]
     fn test_case_3() {
-        assert_eq!(5, ::bear_and_steady_gene("TGATGCCGTCCCCTCAACTTGAGTGCTCCTAATGCGTTGC"))
+        assert_eq!(
+            5,
+            ::bear_and_steady_gene("TGATGCCGTCCCCTCAACTTGAGTGCTCCTAATGCGTTGC")
+        )
     }
 }
