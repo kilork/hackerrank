@@ -44,3 +44,14 @@ result: AABAABA      a: ["BA", "BAA", "BA", "C"] b: ["BA"]
 thread 'tests::test_case_4' panicked at 'assertion failed: `(left == right)`
   left: `"AABAABABAABABABAC"`,
  right: `"AABAABABABABAABAC"`', src/main.rs:239:9
+
+-NN--NN-N- 8100
+-N-NN-N--N 8110
+N--N-NN-N- 8120
+-N-NN--NN- 8130
+N--N-NN-N- 8140
+-NN--N-NN- 8150
+-NN-N--NN- 8160
+-N-NN-N--N 8170
+-NN--NN-N- 8180
+-NN-N--NN- 8190

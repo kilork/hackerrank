@@ -75,13 +75,13 @@ impl<'a> MinimalLexicographicalString<'a> {
 
         let __a: Vec<&[String]> = Tokenizer::new(&_a[..]).collect();
         let __b: Vec<&[String]> = Tokenizer::new(&_b[..]).collect();
-        println!("a: {:?}", __a);
-        println!("b: {:?}", __b);
+        println!("a: {:?}...", &__a[..10.min(__a.len())]);
+        println!("b: {:?}...", &__b[..10.min(__b.len())]);
 
         let __a: Vec<String> = Tokenizer::new(&_a[..]).map(|x| x.join("")).collect();
         let __b: Vec<String> = Tokenizer::new(&_b[..]).map(|x| x.join("")).collect();
-        println!("a: {:?}", __a);
-        println!("b: {:?}", __b);
+        println!("a: {:?}", &__a[..10.min(__a.len())]);
+        println!("b: {:?}", &__b[..10.min(__b.len())]);
 
         let mut tokenizer_a = Tokenizer::new(self.a);
         let mut tokenizer_b = Tokenizer::new(self.b);
@@ -91,10 +91,11 @@ impl<'a> MinimalLexicographicalString<'a> {
         let mut b_index = 0;
         while let (Some(a), Some(b)) = (a_token, b_token) {
             println!(
-                "result: {:12} a: {:>12?} b: {:>12?}",
-                String::from_utf8_lossy(&self.result),
-                &_a[a_index..],
-                &_b[b_index..]
+                "result: {:12} a: {:>12?} b: {:>12?} a_index: {} b_index: {} len: {} a: {} b: {}",
+                &String::from_utf8_lossy(&self.result)[((self.result.len() as i64 -10).max(0) as usize)..],
+                &_a[a_index..(a_index+10).min(_a.len())],
+                &_b[b_index..(b_index+10).min(_b.len())],
+                a_index, b_index, self.result.len(), String::from_utf8_lossy(a), String::from_utf8_lossy(b)
             );
             if compare(a, b) {
                 self.result.extend(a);
