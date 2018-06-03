@@ -24,8 +24,7 @@ impl fmt::Debug for Solution {
 }
 
 impl Solution {
-    fn next_empty(&self, msf: &MinimalSequenceFinder) -> Vec<Solution> {
-        let mut next = vec![];
+    fn next_empty(&self, msf: &MinimalSequenceFinder, next: &mut Vec<Solution>) {
         let (next_a, next_b) = if self.is_a {
             (self.a + 1, self.b)
         } else {
@@ -45,7 +44,6 @@ impl Solution {
                 is_a: false,
             });
         }
-        next
     }
 }
 
@@ -83,7 +81,6 @@ impl<'a> MinimalSequenceFinder<'a> {
         ];
         loop {
             let mut min = std::u8::MAX;
-            let mut min_solution = None;
 
             for i in 0..solutions.len() {
                 let s = &solutions[i];
@@ -94,28 +91,23 @@ impl<'a> MinimalSequenceFinder<'a> {
                 };
                 if current < min {
                     min = current;
-                    min_solution = Some(i);
                 }
             }
 
             self.result.push(min);
 
-            let mut next_solutions: Vec<Solution> = solutions
-                .iter()
-                .filter_map(|s| {
-                    let current = if s.is_a {
-                        self.a[s.a]
-                    } else {
-                        self.b[s.b]
-                    };
-                    if current == min {
-                        Some(s.next_empty(self))
-                    } else {
-                        None
-                    }
-                })
-                .flat_map(|x| x)
-                .collect();
+            let mut next_solutions = vec![];
+            for i in 0..solutions.len() {
+                let s = &solutions[i];
+                let current = if s.is_a {
+                    self.a[s.a]
+                } else {
+                    self.b[s.b]
+                };
+                if current == min {
+                    s.next_empty(&self, &mut next_solutions);
+                }
+            }
             let before_len = next_solutions.len();
             next_solutions.sort();
             next_solutions.dedup();
