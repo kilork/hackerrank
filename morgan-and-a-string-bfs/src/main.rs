@@ -10,7 +10,6 @@ fn main() {
 
 #[derive(PartialEq, PartialOrd, Eq, Ord)]
 struct Solution {
-    data: u8,
     a: usize,
     b: usize,
     is_a: bool,
@@ -20,19 +19,11 @@ use std::fmt;
 
 impl fmt::Debug for Solution {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{{ data: {}, a: {}, b: {} }}",
-            self.data as char, self.a, self.b
-        )
+        write!(f, "{{ a: {}, b: {} }}", self.a, self.b)
     }
 }
 
 impl Solution {
-    fn append_to(&self, result: &mut Vec<u8>) {
-        result.push(self.data);
-    }
-
     fn next_empty(&self, msf: &MinimalSequenceFinder) -> Vec<Solution> {
         let mut next = vec![];
         let (next_a, next_b) = if self.is_a {
@@ -42,7 +33,6 @@ impl Solution {
         };
         if next_a < msf.a.len() {
             next.push(Solution {
-                data: msf.a[next_a],
                 a: next_a,
                 b: next_b,
                 is_a: true,
@@ -50,7 +40,6 @@ impl Solution {
         }
         if next_b < msf.b.len() {
             next.push(Solution {
-                data: msf.b[next_b],
                 a: next_a,
                 b: next_b,
                 is_a: false,
@@ -82,13 +71,11 @@ impl<'a> MinimalSequenceFinder<'a> {
 
         let mut solutions: Vec<Solution> = vec![
             Solution {
-                data: self.a[0],
                 a: 0,
                 b: 0,
                 is_a: true,
             },
             Solution {
-                data: self.b[0],
                 a: 0,
                 b: 0,
                 is_a: false,
@@ -99,21 +86,30 @@ impl<'a> MinimalSequenceFinder<'a> {
             let mut min_solution = None;
 
             for i in 0..solutions.len() {
-                let current = solutions[i].data;
+                let s = &solutions[i];
+                let current = if s.is_a {
+                    self.a[s.a]
+                } else {
+                    self.b[s.b]
+                };
                 if current < min {
                     min = current;
                     min_solution = Some(i);
                 }
             }
 
-            let index = min_solution.unwrap();
-            solutions[index].append_to(&mut self.result);
+            self.result.push(min);
 
             let mut next_solutions: Vec<Solution> = solutions
                 .iter()
-                .filter_map(|x| {
-                    if x.data == min {
-                        Some(x.next_empty(self))
+                .filter_map(|s| {
+                    let current = if s.is_a {
+                        self.a[s.a]
+                    } else {
+                        self.b[s.b]
+                    };
+                    if current == min {
+                        Some(s.next_empty(self))
                     } else {
                         None
                     }
