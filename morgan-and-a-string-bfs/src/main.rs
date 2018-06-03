@@ -8,6 +8,7 @@ fn main() {
     }
 }
 
+#[derive(PartialEq, PartialOrd, Eq, Ord)]
 struct Solution {
     data: u8,
     a: usize,
@@ -108,7 +109,7 @@ impl<'a> MinimalSequenceFinder<'a> {
             let index = min_solution.unwrap();
             solutions[index].append_to(&mut self.result);
 
-            let next_solutions: Vec<Solution> = solutions
+            let mut next_solutions: Vec<Solution> = solutions
                 .iter()
                 .filter_map(|x| {
                     if x.data == min {
@@ -119,6 +120,13 @@ impl<'a> MinimalSequenceFinder<'a> {
                 })
                 .flat_map(|x| x)
                 .collect();
+            let before_len = next_solutions.len();
+            next_solutions.sort();
+            next_solutions.dedup();
+            let after_len = next_solutions.len();
+            if before_len != after_len {
+                println!("before: {} after: {}", before_len, after_len);
+            }
 
             solutions.clear();
             solutions.extend(next_solutions);
