@@ -1,13 +1,3 @@
-fn main() {
-    let count: usize = read_line().parse().unwrap();
-
-    for _ in 0..count {
-        let a = read_line();
-        let b = read_line();
-        println!("{}", minimal_sequence_finder(&a, &b));
-    }
-}
-
 #[derive(PartialEq, PartialOrd, Eq, Ord)]
 struct Solution {
     a: usize,
@@ -66,6 +56,8 @@ impl<'a> MinimalSequenceFinder<'a> {
         if !self.result.is_empty() {
             return &self.result;
         }
+        let a: Vec<&[u8]> = Tokenizer::new(self.a).collect();
+        let b: Vec<&[u8]> = Tokenizer::new(self.b).collect();
 
         let mut solutions: Vec<Solution> = vec![
             Solution {
@@ -128,14 +120,41 @@ impl<'a> MinimalSequenceFinder<'a> {
     }
 }
 
-fn minimal_sequence_finder<'a>(a: &'a str, b: &'a str) -> String {
-    String::from_utf8_lossy(MinimalSequenceFinder::new(a, b).solve()).into_owned()
+struct Tokenizer<'a, T: 'a> {
+    data: &'a [T],
+    index: usize,
 }
 
-fn read_line() -> String {
-    let mut buf = String::new();
-    std::io::stdin().read_line(&mut buf).unwrap();
-    buf.trim_right().to_string()
+impl<'a, T> Tokenizer<'a, T> {
+    fn new(data: &[T]) -> Tokenizer<T> {
+        Tokenizer { data, index: 0 }
+    }
+}
+
+impl<'a, T: 'a> Iterator for Tokenizer<'a, T>
+where
+    T: PartialEq + PartialOrd,
+{
+    type Item = &'a [T];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index == self.data.len() {
+            return None;
+        }
+        let start = self.index;
+        let first = &self.data[self.index];
+        while self.index < self.data.len() && *first == self.data[self.index] {
+            self.index += 1;
+        }
+        while self.index < self.data.len() && *first > self.data[self.index] {
+            self.index += 1;
+        }
+        Some(&self.data[start..self.index])
+    }
+}
+
+pub fn minimal_sequence_finder<'a>(a: &'a str, b: &'a str) -> String {
+    String::from_utf8_lossy(MinimalSequenceFinder::new(a, b).solve()).into_owned()
 }
 
 #[cfg(test)]
@@ -176,5 +195,4 @@ mod tests {
         }
         assert_eq!(expected, result);
     }
-
 }

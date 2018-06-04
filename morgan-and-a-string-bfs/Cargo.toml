@@ -1,6 +1,21 @@
 [package]
-name = "morgan-and-a-string-bfs"
+name = "morgan_and_a_string_bfs"
 version = "0.1.0"
 authors = ["Alexander Korolev <kilork@yandex.ru>"]
 
+[lib]
+name = "morgan_and_a_string_bfs"
+path = "src/lib.rs"
+
+[[bin]]
+name = "morgan-bfs"
+path = "src/bin.rs"
+
 [dependencies]
+
+[dev-dependencies]
+criterion = "0.1.2"
+
+[[bench]]
+name = "minimal_sequence_finder"
+harness = false
