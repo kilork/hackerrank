@@ -90,7 +90,7 @@ impl<'a> MinimalSequenceFinder<'a> {
 
             for i in 1..solutions.len() {
                 let current = token(&solutions[i]);
-                if less_than(current, min) {
+                if less(current, min) {
                     min = current;
                 }
             }
@@ -154,7 +154,7 @@ where
     }
 }
 
-fn less_than(a: &[u8], b: &[u8]) -> bool {
+fn less(a: &[u8], b: &[u8]) -> bool {
     if a.len() < b.len() {
         if a < b {
             a < &b[..a.len()]
@@ -174,20 +174,20 @@ fn less_than(a: &[u8], b: &[u8]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    fn less_than(a: &str, b: &str) -> bool {
-        ::less_than(a.as_bytes(), b.as_bytes())
+    fn less(a: &str, b: &str) -> bool {
+        ::less(a.as_bytes(), b.as_bytes())
     }
 
     #[test]
-    fn less_than_is_ok() {
-        assert_eq!(true, less_than("A", "B"));
-        assert_eq!(false, less_than("B", "A"));
-        assert_eq!(false, less_than("B", "B"));
-        assert_eq!(false, less_than("A", "A"));
-        assert_eq!(false, less_than("A", "AA"));
-        assert_eq!(true, less_than("AA", "A"));
-        assert_eq!(false, less_than("B", "BAA"));
-        assert_eq!(true, less_than("BAA", "B"));
+    fn less_is_ok() {
+        assert_eq!(true, less("A", "B"));
+        assert_eq!(false, less("B", "A"));
+        assert_eq!(false, less("B", "B"));
+        assert_eq!(false, less("A", "A"));
+        assert_eq!(false, less("A", "AA"));
+        assert_eq!(true, less("AA", "A"));
+        assert_eq!(false, less("B", "BAA"));
+        assert_eq!(true, less("BAA", "B"));
     }
 
     #[test]
