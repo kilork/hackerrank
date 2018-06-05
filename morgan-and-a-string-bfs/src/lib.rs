@@ -1,3 +1,7 @@
+pub fn minimal_sequence_finder<'a>(a: &'a str, b: &'a str) -> String {
+    String::from_utf8_lossy(MinimalSequenceFinder::new(a, b).solve()).into_owned()
+}
+
 #[derive(PartialEq, PartialOrd, Eq, Ord)]
 struct Solution {
     a: usize,
@@ -14,25 +18,33 @@ impl fmt::Debug for Solution {
 }
 
 impl Solution {
-    fn next_empty(&self, msf: &MinimalSequenceFinder, next: &mut Vec<Solution>) {
+    fn next_empty(&self, a: &[&[u8]], b: &[&[u8]], next: &mut Vec<Solution>) {
         let (next_a, next_b) = if self.is_a {
             (self.a + 1, self.b)
         } else {
             (self.a, self.b + 1)
         };
-        if next_a < msf.a.len() {
+        if next_a < a.len() {
             next.push(Solution {
                 a: next_a,
                 b: next_b,
                 is_a: true,
             });
         }
-        if next_b < msf.b.len() {
+        if next_b < b.len() {
             next.push(Solution {
                 a: next_a,
                 b: next_b,
                 is_a: false,
             });
+        }
+    }
+
+    fn token<'a>(&self, a: &'a [&[u8]], b: &'a [&[u8]]) -> &'a [u8] {
+        if self.is_a {
+            a[self.a]
+        } else {
+            b[self.b]
         }
     }
 }
@@ -56,6 +68,7 @@ impl<'a> MinimalSequenceFinder<'a> {
         if !self.result.is_empty() {
             return &self.result;
         }
+
         let a: Vec<&[u8]> = Tokenizer::new(self.a).collect();
         let b: Vec<&[u8]> = Tokenizer::new(self.b).collect();
 
@@ -72,48 +85,36 @@ impl<'a> MinimalSequenceFinder<'a> {
             },
         ];
         loop {
-            let mut min = std::u8::MAX;
+            let token = |x: &Solution| x.token(&a, &b);
+            let mut min = token(&solutions[0]);
 
-            for i in 0..solutions.len() {
-                let s = &solutions[i];
-                let current = if s.is_a {
-                    self.a[s.a]
-                } else {
-                    self.b[s.b]
-                };
-                if current < min {
+            for i in 1..solutions.len() {
+                let current = token(&solutions[i]);
+                if less_than(current, min) {
                     min = current;
                 }
             }
 
-            self.result.push(min);
+            self.result.extend(min);
 
             let mut next_solutions = vec![];
+
             for i in 0..solutions.len() {
                 let s = &solutions[i];
-                let current = if s.is_a {
-                    self.a[s.a]
-                } else {
-                    self.b[s.b]
-                };
+                let current = token(s);
                 if current == min {
-                    s.next_empty(&self, &mut next_solutions);
+                    s.next_empty(&a, &b, &mut next_solutions);
                 }
             }
-            let before_len = next_solutions.len();
+
             next_solutions.sort();
             next_solutions.dedup();
-            let after_len = next_solutions.len();
-            if before_len != after_len {
-                println!("before: {} after: {}", before_len, after_len);
-            }
 
-            solutions.clear();
-            solutions.extend(next_solutions);
-
-            if solutions.is_empty() {
+            if next_solutions.is_empty() {
                 break;
             }
+
+            solutions = next_solutions;
         }
 
         &self.result
@@ -153,12 +154,42 @@ where
     }
 }
 
-pub fn minimal_sequence_finder<'a>(a: &'a str, b: &'a str) -> String {
-    String::from_utf8_lossy(MinimalSequenceFinder::new(a, b).solve()).into_owned()
+fn less_than(a: &[u8], b: &[u8]) -> bool {
+    if a.len() < b.len() {
+        if a < b {
+            a < &b[..a.len()]
+        } else {
+            false
+        }
+    } else if b.len() < a.len() {
+        if a > b {
+            !(&a[..b.len()] > b)
+        } else {
+            true
+        }
+    } else {
+        a < b
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    fn less_than(a: &str, b: &str) -> bool {
+        ::less_than(a.as_bytes(), b.as_bytes())
+    }
+
+    #[test]
+    fn less_than_is_ok() {
+        assert_eq!(true, less_than("A", "B"));
+        assert_eq!(false, less_than("B", "A"));
+        assert_eq!(false, less_than("B", "B"));
+        assert_eq!(false, less_than("A", "A"));
+        assert_eq!(false, less_than("A", "AA"));
+        assert_eq!(true, less_than("AA", "A"));
+        assert_eq!(false, less_than("B", "BAA"));
+        assert_eq!(true, less_than("BAA", "B"));
+    }
+
     #[test]
     fn test_case_1() {
         assert_eq!("DAJACKNIEL", ::minimal_sequence_finder("JACK", "DANIEL"));
