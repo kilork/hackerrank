@@ -107,12 +107,12 @@ impl<'a> MinimalSequenceFinder<'a> {
                 }
             }
 
-            next_solutions.sort();
-            next_solutions.dedup();
-
             if next_solutions.is_empty() {
                 break;
             }
+
+            next_solutions.sort();
+            next_solutions.dedup();
 
             solutions = next_solutions;
         }
