@@ -43,16 +43,16 @@ where
     I: IntoIterator<Item = Position>,
 {
     let mut mins = [0i32; 9];
-    let queen = (queen.0 - 1, queen.1 - 1);
+    let q = (queen.0 - 1, queen.1 - 1);
     let n = n - 1;
-    mins[0] = queen.0.min(queen.1);
-    mins[1] = queen.1;
-    mins[2] = (n - queen.0).min(queen.1);
-    mins[3] = queen.0;
-    mins[5] = n - queen.0;
-    mins[6] = queen.0.min(n - queen.1);
-    mins[7] = n - queen.1;
-    mins[8] = (n - queen.0).min(n - queen.1);
+    mins[0] = q.0.min(q.1);
+    mins[1] = q.1;
+    mins[2] = (n - q.0).min(q.1);
+    mins[3] = q.0;
+    mins[5] = n - q.0;
+    mins[6] = q.0.min(n - q.1);
+    mins[7] = n - q.1;
+    mins[8] = (n - q.0).min(n - q.1);
     obstacles
         .into_iter()
         .map(|x| (x.0 - queen.0, x.1 - queen.1))
@@ -99,11 +99,7 @@ mod tests {
     fn case_2() {
         assert_eq!(
             10,
-            ::queens_attack_2(5, &(4, 3), vec![
-                              (5, 5),
-                              (4, 2),
-                              (2, 3),
-            ].into_iter())
+            ::queens_attack_2(5, &(4, 3), vec![(5, 5), (4, 2), (2, 3)].into_iter())
         );
     }
 }
