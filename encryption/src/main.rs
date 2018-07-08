@@ -9,8 +9,10 @@ fn encrypt(s: &str) -> String {
     let cols = lim.ceil() as usize;
     let (rows, cols) = if rows * rows >= s.len() {
         (rows, rows)
-    } else {
+    } else if rows * cols >= s.len() {
         (rows, cols)
+    } else {
+        (cols, cols)
     };
     let mut result = Vec::new();
     for j in 0..cols {
