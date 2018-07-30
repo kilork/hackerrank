@@ -29,12 +29,26 @@ fn find_matrix(source: &Matrix, pattern: &Matrix) -> Option<(usize, usize)> {
     if pattern.rows > source.rows || pattern.cols > source.cols {
         return None;
     }
+
     if let Some(first_line) = pattern.data.first() {
         for i in 0..source.rows - pattern.rows + 1 {
-            let source_line : &str = &source.data[i];
-            let matches = source_line.match_indices(first_line);
+            let source_line: &str = &source.data[i];
+
+            'm: for m in 0..source_line.len() - first_line.len() + 1 {
+                for row in 0..pattern.rows {
+                    let row_substr = &source.data[i + row][m..m + first_line.len()];
+                    let pattern = &pattern.data[row];
+
+                    if row_substr != pattern {
+                        continue 'm;
+                    }
+                }
+
+                return Some((i, m));
+            }
         }
     }
+
     None
 }
 
