@@ -1,0 +1,6 @@
+[package]
+name = "minimum-distances"
+version = "0.1.0"
+authors = ["Alexander Korolev <kilork@yandex.ru>"]
+
+[dependencies]
