@@ -5,3 +5,4 @@
 **/rls
 **/.criterion
 *.log
+Cargo.lock
